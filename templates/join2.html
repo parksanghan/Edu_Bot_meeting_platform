@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <style>
+      #mic-chk,#chk-hear-mic ,  #record-start, #record-stop, #fine-tuning {
+    z-index: 1001; /* 다른 요소보다 더 높은 값으로 설정 */
+}
+      #button {
+    position: relative;
+    z-index: 1000; /* 더 위에 표시될 수 있도록 높은 값 지정 */
+}
+      img {
+        width: 100%;
+        /* 원하는 너비로 조정합니다. */
+        height: auto;
+        /* 높이를 자동으로 조정하여 비율 유지합니다. */
+      }
+      .image-size {
+      width: 50%; /* 이미지의 너비를 조절합니다. */
+      height: 400px; /* 높이를 자동으로 조정하여 가로세로 비율을 유지합니다. */
+      }
+      #file-upload {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1000;
+        /* z-index 추가 */
+        grid-column: 1;
+          grid-row: 1;
+        }
+
+      #stream {
+        flex: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #user-chat-messages,
+      #ai-chat-messages {
+        flex: 1;
+        color: black;
+        overflow-y: auto;
+      }
+
+      #video_grid {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        overflow-x: auto;
+        overflow-y: hidden;
+        max-width: 100%;
+      }
+    </style>
+
+    <!-- icon -->
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', path='favicon.ico') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+    />
+
+    <!-- socketio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- jQuery UI -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
+      integrity="sha512-uto9mlQzrs59VwILcLiRYeLKPPbS/bT71da/OEBYEwcdNUk8jYIy+D176RYoop1Da+f9mvkYrmj5MCLZWEtQuA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <!-- Popper JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- google Material icons -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+
+    <!-- custom css -->
+    <link rel="stylesheet" href="{{url_for('static', path='custom.css')}}" />
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="./css/join2/style.css" />
+    <title>CHAIR | Main</title>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-light fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="#">CHAIR</a>
+
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-toggle="collapse"
+          data-target="#navbarOpen"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarOpen">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Youtube</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Portfolio</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#"></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Join</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div
+      id="carouselIndicator"
+      class="carousel slide"
+      data-ride="carousel"
+      data-interval="false"
+    >
+      <ol class="carousel-indicators">
+        <li
+          data-target="#carouselIndicator"
+          data-slide-to="0"
+          class="active"
+        ></li>
+        <li data-target="#carouselIndicator" data-slide-to="1"></li>
+        <li data-target="#carouselIndicator" data-slide-to="2"></li>
+      </ol>
+
+      <div class="carousel-inner">
+        <!-- Slide One - Stream -->
+        <div class="carousel-item active">
+          <img src="assets/1.jpg" class="d-block w-100" />
+          <div class="carousel-caption">
+            <h5>Stream</h5>
+
+            <div id="stream-content">
+              <div id="stream-chat-container">
+                <!-- 새로운 컨테이너 추가 -->
+                <div id="video-area">
+                  <div id="stream-video">
+                    <div id="rectangle"></div>
+                    <div id="video_grid" class="video-grid"></div>
+                    <video id="local_vid" autoplay muted></video>
+                    <script src="{{url_for('static', path='video-manager.js')}}"></script>
+                    <script src="{{url_for('static', path='chatroom_ui.js')}}"></script>
+                    <script src="{{url_for('static', path='chatroom_networking.js')}}"></script>
+                    <!-- 비디오 관련 스크립트들 -->
+                  </div>
+
+                  <div id="stream-button">
+                  <div id="mic-chk">
+                    <input type="checkbox" id="chk-hear-mic" />
+                    <label for="chk-hear-mic">마이크 소리 듣기</label>
+                    <script src="..\..\static\chatroom_networking.js"></script>
+                    <script>
+                      const chkHearMic = document.getElementById("chk-hear-mic")
+                      const audioCtx = new (window.AudioContext || window.webkitAudioContext)() // 오디오 컨텍스트 정의
+                      const analyser = audioCtx.createAnalyser()   
+                  
+                       
+                      let mediaRecorder;  
+                      let chunks = [];
+                      function makeSound(stream) {
+                      const source = audioCtx.createMediaStreamSource(stream);
+                      source.connect(analyser);
+                      analyser.connect(audioCtx.destination);
+                  }     
+                  </script>
+                  </div>
+                    <script src="..\..\static\chatroom_networking.js"></script>
+                    <button id="record-start">녹음 시작</button>
+                    <button id="record-stop">녹음 중지</button>
+                    <button id="fine-tuning">Fine Tuning</button>
+                  </div>
+                </div>
+
+                <div id="user-chat">
+                  <ul id="user-chat-messages"></ul>
+                  <div id="input-container">
+                    <input
+                      id="user-chat-input"
+                      type="text"
+                      placeholder="SEND A MESSAGE.."
+                    />
+                    <button id="user-send-btn">
+                      <i
+                        class="fas fa-paper-plane fa-lg"
+                        style="color: #183153"
+                      ></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide Two - AI Chatbot -->
+        <div class="carousel-item">
+          <img src="assets/2.jpg" class="d-block w-100" />
+          <div class="carousel-caption">
+            <h5>AI Chatbot</h5>
+
+            <div id="ai-chat">
+              <ul id="ai-chat-messages"></ul>
+              <div id="input-container">
+                <input
+                  id="ai-chat-input"
+                  type="text"
+                  placeholder="SEND A MESSAGE.."
+                />
+                <button id="ai-send-btn">SEND</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide Three - File Upload -->
+        <div class="carousel-item">
+          <img src="assets/3.jpg" class="d-block w-100" />
+          <div class="carousel-caption">
+            <h5>File Upload</h5>
+            <div id="file-upload-dialog">
+              <div id="drop_zone"><p>DRAG & DROP</p></div>
+              <div id="upload-button">
+                <input type="file" id="file-input"></input>
+                <button id="submit-btn">SUBMIT</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a
+      class="carousel-control-prev"
+      href="#carouselIndicator"
+      role="button"
+      data-slide="prev"
+    >
+      <span class="carousel-control-prev-icon"></span>
+    </a>
+    <a
+      class="carousel-control-next"
+      href="#carouselIndicator"
+      role="button"
+      data-slide="next"
+    >
+      <span class="carousel-control-next-icon"></span>
+    </a>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+
+    <script>
+      $(document).ready(function () {
+        $(".carousel").carousel({
+          interval: false,
+        });
+      });
+
+      async function uploadFile(sid, file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch(`/upload/${sid}`, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            console.log("File uploaded successfully");
+          } else {
+            console.error("Failed to upload file");
+          }
+        } catch (error) {
+          console.error("Error during file upload:", error);
+        }
+      }
+
+      var dropZone = document.getElementById("drop_zone");
+
+      dropZone.addEventListener("dragover", function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      });
+
+      dropZone.addEventListener("drop", function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var files = e.dataTransfer.files;
+
+        console.log("dragover");
+
+        document.getElementById("file-input").files = files;
+      });
+
+      document
+        .getElementById("file-input")
+        .addEventListener("change", function (e) {
+          var files = e.target.files;
+        });
+
+      document
+        .getElementById("submit-btn")
+        .addEventListener("click", function () {
+          // 'Submit' 버튼 클릭 시 수행할 작업을 여기에 작성하세요.
+
+          const sid = myID; // 실제 sid 값을 적용해야 합니다.
+          /**
+           * @type {FileList}
+           */
+          const fileInput = document.getElementById("file-input").files; // 파일 입력 요소의 ID에 맞게 변경해야 합니다.
+
+          console.log("submit-btn - click" + String(fileInput.item(0)));
+
+          if (fileInput.item(0)) {
+            uploadFile(sid, fileInput.item(0));
+          } else {
+            console.error("No file selected");
+          }
+        });
+
+        document.getElementById('fine-tuning').addEventListener('click', function() {
+    // 이 곳에 클릭 이벤트가 발생했을 때 실행할 코드를 작성합니다.
+    //alert('Fine Tuning 버튼이 클릭되었습니다.');
+        socket.emit('FineTune');
+  });
+
+      document  
+        .getElementById("record-start")
+        .addEventListener("click", function () {
+          if (navigator.mediaDevices) {
+            console.log("getUserMedia supported.");
+            this.style.background = "red";
+            this.style.color = "black";
+            this.disabled=true;
+            recordStopButton.disabled=false;
+            recordStopButton.style.color = "white";
+            recordStopButton.style.background = "black";
+            recordStopButton.textContent="녹음 중지";
+            const constraints = {
+              audio: true,
+            };
+            let chunks = [];
+            navigator.mediaDevices
+              .getUserMedia(constraints)
+              .then((stream) => {
+                mediaRecorder = new MediaRecorder(stream);
+
+                chkHearMic.onchange = (e) => {
+                  if (e.target.checked == true) {
+                    audioCtx.resume();
+                    makeSound(stream);
+                  } else {
+                    audioCtx.suspend();
+                  }
+                };
+                mediaRecorder.start(1000);
+                console.log(mediaRecorder.state);
+                mediaRecorder.onstop = (e) => {
+                  console.log("onstop happen!");
+
+                  if (chunks.length >= 9) {
+                    console.log(
+                      "data available after MediaRecorder.stop() called."
+                    );
+                    const bb = new Blob(chunks, { type: "audio/wav" });
+                    socket.emit("voice", bb);
+                  }
+                  chunks = [];
+                };
+                mediaRecorder.ondataavailable = function (e) {
+                  chunks.push(e.data);
+                  console.log("add " + String(chunks.length));
+
+                  if (chunks.length >= 10) {
+                    mediaRecorder.stop();
+                    //const bloddb = new Blob(chunks, { 'type' : 'audio/wav' })
+                    //socket.emit('voice', bloddb)
+
+                    //chunks = []
+                    mediaRecorder.start(1000);
+                    //console.log("end " + String(chunks.length))
+                  }
+
+                  mediaRecorder.sendData = function (buffer) {
+                    const bloddb = new Blob(buffer, { type: "audio/wav" });
+                    socket.emit("voice", bloddb);
+
+                    console.log("end " + String(chunks.length));
+                  };
+                };
+
+                // Call makeSound() function here
+              })
+              .catch((err) => {
+                console.log("The following error occurred: " + err);
+              });
+          } else {
+            console.error("getUserMedia not supported on your browser!");
+          }
+        });
+
+      document
+        .getElementById("record-stop")
+        .addEventListener("click", function () {
+          socket.emit("recordstop"); 
+          console.log("stop 이벤트 전송됨 ");
+          // 녹음중단시 DosendDataWav 를 요청하여 stt 요청  
+          this.style.background = "red";
+          this.style.color = "black";
+          this.disabled = true;
+            
+          recordStartButton.disabled= false;
+          recordStartButton.style.backgroundColor="black";
+          recordStartButton.style.color="white";
+          recordStartButton.textContent= "녹음 시작";
+          if (navigator.mediaDevices) {
+            console.log("STOP INIT!");
+          
+           
+            const constraints = {
+              audio: true,
+            };
+
+            navigator.mediaDevices
+              .getUserMedia(constraints)
+              .then((stream) => {
+                mediaRecorder.stop(1000);
+                console.log(mediaRecorder.state);
+
+                mediaRecorder.onstop = (e) => {
+                  console.log("STOP EXEC!");
+
+                  if (chunks.length > 1) {
+                    console.log("STOP SEND!");
+                    const bb = new Blob(chunks, { type: "audio/wav" });
+                    socket.emit("voice", bb);
+                  }
+                  chunks = [];
+                };
+
+                mediaRecorder.ondataavailable = (e) => {};
+                // Call makeSound() function here
+              })
+              .catch((err) => {
+                console.log("The following error occurred: " + err);
+              });
+          } else {
+            console.error("getUserMedia not supported on your browser!");
+          }
+        });
+      
+        document.getElementById('user-chat-input').addEventListener('keyup', function(event) {
+    if (event.key === 'Enter') {
+        document.getElementById('user-send-btn').click();
+    }
+});
+
+document.getElementById('ai-chat-input').addEventListener('keyup', function(event) {
+    if (event.key === 'Enter') {
+        document.getElementById('ai-send-btn').click();
+    }
+});
+      document.getElementById("user-send-btn").addEventListener("click", function () {
+          var inputElement = document.getElementById("user-chat-input");
+          var message = inputElement.value;
+          socket.emit("chat", message); // 메세지 전송 후
+          inputElement.value = ""; // 입력란을 공백으로 초기화
+        });
+      document
+        .getElementById("ai-send-btn")
+        .addEventListener("click", function () {
+          let count = 1;
+          let dots = ".";
+          var inputElement = document.getElementById("ai-chat-input");
+          var message = inputElement.value;
+          var messageList = document.getElementById("ai-chat-messages"); // 요소를 가져옵니다.
+          var newMessage = document.createElement("li"); // 새로운 리스트 아이템을 생성합니다.
+          var textNode = document.createTextNode("나 : " + message); // 텍스트 노드를 생성합니다.
+          newMessage.appendChild(textNode); // 리스트 아이템에 텍스트 노드를 추가합니다.
+          messageList.appendChild(newMessage); // 요소에 리스트 아이템을 추가합니다.
+          var newNodeMessage = document.createElement("li"); // 새로운 리스트 아이템을 생성합니다.
+          var newtextNode = document.createTextNode("[CHAIR BOT] 답변 생성 중.."); // 텍스트 노드를 생성합니다.
+          newNodeMessage.appendChild(newtextNode); // 리스트 아이템에 텍스트 노드를 추가합니다.
+          messageList.appendChild(newNodeMessage); // 요소에 리스트 아이템을 추가합니다.
+          socket.emit("question", message); // 메세지 전송 후
+          inputElement.value = ""; // 입력란을 공백으로 초기화
+          let showEllipsis = true;
+          ellipsisInterval = setInterval(() => {
+            let displayedDots = dots.repeat(count);
+            // 마지막 메시지를 가져옵니다.
+            let lastMessage = messageList.lastChild;
+            // 마지막 메시지의 텍스트를 업데이트합니다.
+            lastMessage.textContent = "[CHAIR BOT] 답변 중 : " + displayedDots;
+            count = (count % 4) + 1; // 1부터 3까지 순환
+          }, 1000);
+          this.disabled=true;
+          this.style.background="black";
+          this.style.color="white";
+          this.textContent="전송 중.."
+        });
+      document.addEventListener("tutor", function () {
+        // 라벨과 오디오 체크박스를 버튼들의 옆에 배치합니다.
+        mikchkdiv.style.display ="inline-block";
+        labelmic.style.display = "inline-block";
+        checkBoxAudio.style.display = "inline-block";
+        finetunebtn.style.display = "inline-block";
+        // 버튼들을 세로로 나열합니다.
+        fileuploadButton.style.display = "inline-block";
+        recordStartButton.style.display = "inline-block";
+        recordStopButton.style.display = "inline-block";
+      });
+    </script>
+
+    <script type="text/javascript">
+      var myRoomID = "{{room_id}}";
+      var myName = "{{display_name}}";
+      var audioMuted = "{{mute_audio}}" == "1";
+      var videoMuted = "{{mute_video}}" == "1";
+      console.log(">> {{mute_audio}}, {{mute_video}}", audioMuted, videoMuted);
+      let ellipsisInterval; // setInterval을 담을 변수
+      console.log(myName, myRoomID);
+      var checkBoxAudio = document.getElementById("chk-hear-mic");
+      var recordStartButton = document.getElementById("record-start");
+      var recordStopButton = document.getElementById("record-stop");
+      var fileuploadButton = document.getElementById("submit-btn");
+      var labelmic = document.querySelector('label[for="chk-hear-mic"]');
+      var finetunebtn=  document.getElementById("fine-tuning");
+      var mikchkdiv = document.getElementById("mic-chk");
+      mikchkdiv.style.display="none";
+      finetunebtn.style.display="none";
+      checkBoxAudio.style.display  = "none";
+      recordStartButton.style.display = "none";
+      recordStopButton.style.display = "none";
+      fileuploadButton.style.display =  "none";
+      labelmic.style.display = "none";
+    </script>
+  </body>
+</html>

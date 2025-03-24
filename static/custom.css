@@ -1,0 +1,22 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden
+}
+
+#local_vid {
+  height: 240px;
+  width: 150px;
+  object-fit: cover;
+  z-index: 100;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+}
+
+.video_grid {
+  /* z-index */
+  overflow-x: auto; /* 수평 스크롤을 활성화합니다. */
+  position: relative;
+} 
