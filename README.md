@@ -1,6 +1,8 @@
-# Fastapi - socketio  webservice
+# Edu_Bot_meeting_platform
 
-## integrate Fastapi & socketio & react 
+
+## Edu_Bot_meeting_platform
+
 
 
 annotated-types==0.6.0
